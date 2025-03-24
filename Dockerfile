@@ -20,4 +20,6 @@ LABEL \
     maintainer="ElVit (https://github.com/ElVit)" \
     org.opencontainers.image.authors="ElVit (https://github.com/ElVit)" \
     org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.url="https://github.com/ElVit" \
+    org.opencontainers.image.url="https://github.com/ElVit/bitwarden-secrets" \
+    org.opencontainers.image.source="https://github.com/ElVit/bitwarden-secrets" \
+    org.opencontainers.image.description="Bitwarden Secrets"
