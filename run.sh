@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script traps it's own errors, no need for a babysitting set -e.
+# This script traps its own errors, no need for a babysitting set -e.
 set +e
 
 #
@@ -8,33 +8,40 @@ set +e
 #
 
 if [[ -z "${BW_SERVER}" ]]; then
-  echo "BW_SERVER is undefined"
-  ecit 1
+  echo "EnvVar 'BW_SERVER' is undefined."
+  exit 1
 fi
 if [[ -z "${BW_USERNAME}" ]]; then
-  echo "BW_USERNAME is undefined"
-  ecit 1
+  echo "EnvVar 'BW_USERNAME' is undefined."
+  exit 1
 fi
 if [[ -z "${BW_PASSWORD}" ]]; then
-  echo "BW_PASSWORD is undefined"
-  ecit 1
+  echo "EnvVar 'BW_PASSWORD' is undefined."
+  exit 1
 fi
 if [[ -z "${BW_ORGANIZATION}" ]]; then
-  echo "BW_ORGANIZATION is undefined"
-  ecit 1
-fi
-if [[ -z "${SECRETS_FILE}" ]]; then
-  echo "SECRETS_FILE is undefined"
-  ecit 1
+  echo "EnvVar 'BW_ORGANIZATION' is undefined."
+  exit 1
 fi
 
 REPEAT_ENABLED="${REPEAT_ENABLED:-false}"
 REPEAT_INTERVAL="${REPEAT_INTERVAL:-300}"
 if [ "$REPEAT_ENABLED" = true ] ; then
   echo "Repeat enabled with interval ${REPEAT_INTERVAL}."
+else
+  echo "Repeat disabled."
 fi
 
+SECRETS_FILE="${SECRETS_FILE:-/output/secrets.yaml}"
+echo "Secrets will be saved to ${SECRETS_FILE}."
+SECRETS_DIR="${SECRETS_FILE%/*}"
+echo "Ensuring directory $SECRETS_DIR exists."
+mkdir -v -p $SECRETS_DIR
+
 TEMP_SECRETS_FILE="/tmp/secrets.yaml"
+TEMP_SECRETS_DIR="${TEMP_SECRETS_FILE%/*}"
+echo "Ensuring directory $TEMP_SECRETS_DIR exists."
+mkdir -v -p $TEMP_SECRETS_DIR
 
 #
 # Script functions
@@ -45,10 +52,10 @@ function login {
     bw config server ${BW_SERVER} &>/dev/null
 
     echo "Logging into Bitwarden..."
-    SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD}) &>/dev/null
+    SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD} &>/dev/null)
 
     if [ $? -eq 0 ]; then
-        echo "Bitwarden login succesful!"
+        echo "Bitwarden login successful!"
         export BW_SESSION=${SESSION}
     else
         echo ""
@@ -80,7 +87,7 @@ function login_check {
 
 function set_org_id {
     echo "Retrieving organization id..."
-    ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id') 2>/dev/null
+    ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id' 2>/dev/null)
 
     if [ $? -eq 0 ]; then
         echo "Retrieved organization id for ${BW_ORGANIZATION}"
@@ -121,11 +128,11 @@ function generate_secret_files {
         dirname=$(dirname $file)
         basename=$(basename $file)
 
-        mkdir -p /config/${dirname}
-        rm -f /config/${dirname}/${basename}
+        mkdir -p ${SECRETS_DIR}/${dirname}
+        rm -f ${SECRETS_DIR}/${dirname}/${basename}
 
-        echo ${row} | jq -r '.[1] | @base64d' > "/config/${dirname}/${basename}"
-        chmod go-wrx "/config/${dirname}/${basename}"
+        echo ${row} | jq -r '.[1] | @base64d' > "${SECRETS_DIR}/${dirname}/${basename}"
+        chmod go-wrx "${SECRETS_DIR}/${dirname}/${basename}"
     done
 }
 
@@ -156,7 +163,7 @@ function write_uris {
 
             if [ "${uri}" != "null" ]; then
                 echo "Writing ${secret_name}_uri_${i} with ${uri}"
-                echo "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
+                "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE
 
                 ((i=i+1))
             fi
