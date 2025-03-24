@@ -68,13 +68,13 @@ login()
   bw config server ${BW_SERVER} &>/dev/null
 
   log.white "Logging into Bitwarden..."
-  SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD} &>/dev/null)
+  SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD}) &>/dev/null
 
   if [ $? -eq 0 ]; then
     log.white "Bitwarden login successful!"
     export BW_SESSION=${SESSION}
   else
-    log.red ""
+    echo ""
     log.red "Bitwarden login failed. Exiting..."
     exit 1
   fi
@@ -105,8 +105,8 @@ login_check()
 
 set_org_id()
 {
-  echo "Retrieving organization id..."
-  ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id' 2>/dev/null)
+  log.white "Retrieving organization id..."
+  ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id') 2>/dev/null
 
   if [ $? -eq 0 ]; then
     log.white "Retrieved organization id for ${BW_ORGANIZATION}"
@@ -169,7 +169,7 @@ write_field()
 
   if [ "${field}" != "null" ]; then
     log.white "Writing ${secret_name}_${suffix} with ${field}"
-    log.white "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
+    echo "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
   fi
 }
 
@@ -184,7 +184,7 @@ write_uris()
       uri=$(echo ${uris} | jq -r '@base64d' |  jq -r '.uri')
       if [ "${uri}" != "null" ]; then
         log.white "Writing ${secret_name}_uri_${i} with ${uri}"
-        "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
+        echo "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
         ((i=i+1))
       fi
     done
@@ -204,7 +204,7 @@ write_custom_fields()
 
       if [ "${field_name}" != "null" ] && [ "${field_value}" != "null" ]; then
         log.white "Writing ${secret_name}_${field_name} with ${field_value}"
-        log.white "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
+        echo "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
       fi
     done
   fi
@@ -276,7 +276,7 @@ while true; do
 
     log.white "Generating secret files from notes..."
     generate_secret_files
-    log.white "Secret files created."
+    log.white "Secrets files created."
   else
     log.red "No secrets found in your organisation!"
     log.red "--------------------------------------"
