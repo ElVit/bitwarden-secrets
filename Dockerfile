@@ -2,7 +2,7 @@ FROM alpine:latest
 
 ARG BW_CLI_VERSION=1.22.1
 
-COPY run.sh /
+COPY entrypoint.sh /
 
 RUN apk add --no-cache jq npm && \
     npm install --no-progress --no-audit -g @bitwarden/cli@${BW_CLI_VERSION} && \
