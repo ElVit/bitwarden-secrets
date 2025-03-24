@@ -3,6 +3,10 @@
 # This script traps its own errors, no need for a babysitting set -e.
 set +e
 
+# Temp workaround to disable punycode deprecation logging to stderr
+# https://github.com/bitwarden/clients/issues/6689
+export NODE_OPTIONS="--no-deprecation"
+
 #
 # Constants
 #
