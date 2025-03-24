@@ -114,38 +114,35 @@ set_org_id()
 generate_secrets()
 {
   touch ${TEMP_SECRETS_FILE}
-
   printf "# bitwarden secrets file\n" >> ${TEMP_SECRETS_FILE}
   printf "# DO NOT MODIFY -- managed by bitwarden-secrets docker container\n" >> ${TEMP_SECRETS_FILE}
 
   for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 1) | (.|@base64)'); do
+    if [[ -z "${row}" ]]; then
+      continue
+    fi  
     printf "\n" >> ${TEMP_SECRETS_FILE}
-
     row_contents=$(echo ${row} | jq -r '@base64d')
     name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
 
     write_field "${name}" "${row_contents}" ".login.username" "username"
     write_field "${name}" "${row_contents}" ".login.password" "password"
     write_field "${name}" "${row_contents}" ".notes" "notes"
-
     write_uris "${name}" "${row_contents}"
     write_custom_fields "${name}" "${row_contents}"
-
     #log.blue "ROW: ${row_contents}"
   done
 }
 
 generate_secret_files()
 {
-  for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 2) | [.name, (.notes|@base64)]')
-  do
+  for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 2) | [.name, (.notes|@base64)]'); do
     file=$(echo $row | jq -r '.[0]')
     dirname=$(dirname $file)
     basename=$(basename $file)
 
     mkdir -p ${SECRETS_DIR}/${dirname}
     rm -f ${SECRETS_DIR}/${dirname}/${basename}
-
     echo ${row} | jq -r '.[1] | @base64d' > "${SECRETS_DIR}/${dirname}/${basename}"
     chmod go-wrx "${SECRETS_DIR}/${dirname}/${basename}"
   done
@@ -160,7 +157,6 @@ write_field()
 
   #log.blue "Parsing row ${row_contents}"
   field="$(echo ${row_contents} | jq -r ${field_name})"
-
   if [ "${field}" != "null" ]; then
     #log.blue "Writing ${secret_name}_${suffix} with ${field}"
     echo "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
@@ -195,7 +191,6 @@ write_custom_fields()
       field_contents=$(echo ${fields} | jq -r '@base64d')
       field_name=$(echo ${field_contents} | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
       field_value=$(echo ${field_contents} | jq -r '.value')
-
       if [ "${field_name}" != "null" ] && [ "${field_value}" != "null" ]; then
         #log.blue "Writing ${secret_name}_${field_name} with ${field_value}"
         echo "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
@@ -234,12 +229,12 @@ fi
 
 SECRETS_FILE="${SECRETS_FILE:-/output/secrets.yaml}"
 log.white "Secrets will be saved to ${SECRETS_FILE}."
-SECRETS_DIR="${SECRETS_FILE%/*}"
+SECRETS_DIR=$(dirname "$SECRETS_FILE")
 log.white "Ensuring directory $SECRETS_DIR exists."
 mkdir -v -p $SECRETS_DIR
 
 TEMP_SECRETS_FILE="/tmp/secrets.yaml"
-TEMP_SECRETS_DIR="${TEMP_SECRETS_FILE%/*}"
+TEMP_SECRETS_DIR=$(dirname "$TEMP_SECRETS_FILE")
 log.white "Ensuring directory $TEMP_SECRETS_DIR exists."
 mkdir -v -p $TEMP_SECRETS_DIR
 
