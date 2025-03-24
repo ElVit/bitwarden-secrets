@@ -114,14 +114,13 @@ set_org_id()
 generate_secrets()
 {
   touch ${TEMP_SECRETS_FILE}
-  printf "# bitwarden secrets file\n" >> ${TEMP_SECRETS_FILE}
-  printf "# DO NOT MODIFY -- managed by bitwarden-secrets docker container\n" >> ${TEMP_SECRETS_FILE}
+  echo "# bitwarden secrets file" >> ${TEMP_SECRETS_FILE}
+  echo "# DO NOT MODIFY -- managed by bitwarden-secrets docker container" >> ${TEMP_SECRETS_FILE}
 
   for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 1) | (.|@base64)'); do
     if [[ -z "${row}" ]]; then
       continue
     fi  
-    printf "\n" >> ${TEMP_SECRETS_FILE}
     row_contents=$(echo ${row} | jq -r '@base64d')
     name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
 
@@ -130,6 +129,7 @@ generate_secrets()
     write_field "${name}" "${row_contents}" ".notes" "notes"
     write_uris "${name}" "${row_contents}"
     write_custom_fields "${name}" "${row_contents}"
+    printf "\n" >> ${TEMP_SECRETS_FILE}
     #log.blue "ROW: ${row_contents}"
   done
 }
