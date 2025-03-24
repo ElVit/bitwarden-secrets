@@ -3,7 +3,9 @@
 # This script traps its own errors, no need for a babysitting set -e.
 set +e
 
-# Colors constants
+#
+# Constants
+#
 readonly __COLORS_ESCAPE="\033[";
 readonly __COLORS_RESET="${__COLORS_ESCAPE}0m"
 readonly __COLORS_DEFAULT="${__COLORS_ESCAPE}39m"
@@ -28,7 +30,6 @@ readonly __COLORS_BG_WHITE="${__COLORS_ESCAPE}47m"
 #
 # Global variables
 #
-
 if [[ -z "${BW_SERVER}" ]]; then
   echo "EnvVar 'BW_SERVER' is undefined."
   exit 1
@@ -68,26 +69,31 @@ mkdir -v -p $TEMP_SECRETS_DIR
 #
 # Script functions
 #
+log.white() {
+  local message=$*
+  echo -e "${message}" >&2
+  return 0
+}
 
 log.red()
 {
   local message=$*
   echo -e "${__COLORS_RED}${message}${__COLORS_RESET}" >&2
-  return "${__EXIT_OK}"
+  return 0
 }
 
 log.green()
 {
   local message=$*
   echo -e "${__COLORS_GREEN}${message}${__COLORS_RESET}" >&2
-  return "${__EXIT_OK}"
+  return 0
 }
 
 log.yellow()
 {
   local message=$*
   echo -e "${__COLORS_YELLOW}${message}${__COLORS_RESET}" >&2
-  return "${__EXIT_OK}"
+  return 0
 }
 
 login()
@@ -241,7 +247,6 @@ write_custom_fields()
 #
 # Start of main loop
 #
-
 echo "Start retrieving your Home Assistant secrets from Bitwarden"
 login
 set_org_id
