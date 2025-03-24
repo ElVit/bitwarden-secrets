@@ -163,7 +163,7 @@ function write_uris {
 
             if [ "${uri}" != "null" ]; then
                 echo "Writing ${secret_name}_uri_${i} with ${uri}"
-                "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE
+                "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
 
                 ((i=i+1))
             fi
