@@ -3,9 +3,9 @@ FROM alpine:latest
 ARG BW_CLI_VERSION=1.22.1
 
 # Install dependencies
-RUN apk add --no-cache jq npm
+RUN apk add --no-cache jq npm bash
 # Verify installation
-RUN jq --version && npm --version
+RUN jq --version && npm --version && bash --version
 # Install Bitwarden CLI
 RUN npm install --no-progress --no-audit -g @bitwarden/cli@${BW_CLI_VERSION}
 # Verify Bitwarden CLI installation
