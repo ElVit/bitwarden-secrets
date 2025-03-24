@@ -3,6 +3,28 @@
 # This script traps its own errors, no need for a babysitting set -e.
 set +e
 
+# Colors constants
+readonly __COLORS_ESCAPE="\033[";
+readonly __COLORS_RESET="${__COLORS_ESCAPE}0m"
+readonly __COLORS_DEFAULT="${__COLORS_ESCAPE}39m"
+readonly __COLORS_BLACK="${__COLORS_ESCAPE}30m"
+readonly __COLORS_RED="${__COLORS_ESCAPE}31m"
+readonly __COLORS_GREEN="${__COLORS_ESCAPE}32m"
+readonly __COLORS_YELLOW="${__COLORS_ESCAPE}33m"
+readonly __COLORS_BLUE="${__COLORS_ESCAPE}34m"
+readonly __COLORS_MAGENTA="${__COLORS_ESCAPE}35m"
+readonly __COLORS_CYAN="${__COLORS_ESCAPE}36m"
+readonly __COLORS_LIGHT_GRAY="${__COLORS_ESCAPE}37m"
+readonly __COLORS_BG_DEFAULT="${__COLORS_ESCAPE}49m"
+readonly __COLORS_BG_BLACK="${__COLORS_ESCAPE}40m"
+readonly __COLORS_BG_RED="${__COLORS_ESCAPE}41m"
+readonly __COLORS_BG_GREEN="${__COLORS_ESCAPE}42m"
+readonly __COLORS_BG_YELLOW="${__COLORS_ESCAPE}43m"
+readonly __COLORS_BG_BLUE="${__COLORS_ESCAPE}44m"
+readonly __COLORS_BG_MAGENTA="${__COLORS_ESCAPE}45m"
+readonly __COLORS_BG_CYAN="${__COLORS_ESCAPE}46m"
+readonly __COLORS_BG_WHITE="${__COLORS_ESCAPE}47m"
+
 #
 # Global variables
 #
@@ -46,6 +68,24 @@ mkdir -v -p $TEMP_SECRETS_DIR
 #
 # Script functions
 #
+
+bashio::log.red() {
+    local message=$*
+    echo -e "${__COLORS_RED}${message}${__COLORS_RESET}" >&2
+    return "${__EXIT_OK}"
+}
+
+bashio::log.green() {
+    local message=$*
+    echo -e "${__COLORS_GREEN}${message}${__COLORS_RESET}" >&2
+    return "${__EXIT_OK}"
+}
+
+bashio::log.yellow() {
+    local message=$*
+    echo -e "${__COLORS_YELLOW}${message}${__COLORS_RESET}" >&2
+    return "${__EXIT_OK}"
+}
 
 function login {
     echo "Configuring Bitwarden server..."
