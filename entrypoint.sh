@@ -69,19 +69,19 @@ mkdir -v -p $TEMP_SECRETS_DIR
 # Script functions
 #
 
-bashio::log.red() {
+log.red() {
     local message=$*
     echo -e "${__COLORS_RED}${message}${__COLORS_RESET}" >&2
     return "${__EXIT_OK}"
 }
 
-bashio::log.green() {
+log.green() {
     local message=$*
     echo -e "${__COLORS_GREEN}${message}${__COLORS_RESET}" >&2
     return "${__EXIT_OK}"
 }
 
-bashio::log.yellow() {
+log.yellow() {
     local message=$*
     echo -e "${__COLORS_YELLOW}${message}${__COLORS_RESET}" >&2
     return "${__EXIT_OK}"
