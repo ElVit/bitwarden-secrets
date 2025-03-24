@@ -32,48 +32,10 @@ readonly __COLORS_BG_CYAN="${__COLORS_ESCAPE}46m"
 readonly __COLORS_BG_WHITE="${__COLORS_ESCAPE}47m"
 
 #
-# Global variables
-#
-if [[ -z "${BW_SERVER}" ]]; then
-  echo "EnvVar 'BW_SERVER' is undefined."
-  exit 1
-fi
-if [[ -z "${BW_USERNAME}" ]]; then
-  echo "EnvVar 'BW_USERNAME' is undefined."
-  exit 1
-fi
-if [[ -z "${BW_PASSWORD}" ]]; then
-  echo "EnvVar 'BW_PASSWORD' is undefined."
-  exit 1
-fi
-if [[ -z "${BW_ORGANIZATION}" ]]; then
-  echo "EnvVar 'BW_ORGANIZATION' is undefined."
-  exit 1
-fi
-
-REPEAT_ENABLED="${REPEAT_ENABLED:-false}"
-REPEAT_INTERVAL="${REPEAT_INTERVAL:-300}"
-if [ "$REPEAT_ENABLED" = true ] ; then
-  echo "Repeat enabled with interval ${REPEAT_INTERVAL}."
-else
-  echo "Repeat disabled."
-fi
-
-SECRETS_FILE="${SECRETS_FILE:-/output/secrets.yaml}"
-echo "Secrets will be saved to ${SECRETS_FILE}."
-SECRETS_DIR="${SECRETS_FILE%/*}"
-echo "Ensuring directory $SECRETS_DIR exists."
-mkdir -v -p $SECRETS_DIR
-
-TEMP_SECRETS_FILE="/tmp/secrets.yaml"
-TEMP_SECRETS_DIR="${TEMP_SECRETS_FILE%/*}"
-echo "Ensuring directory $TEMP_SECRETS_DIR exists."
-mkdir -v -p $TEMP_SECRETS_DIR
-
-#
 # Script functions
 #
-log.white() {
+log.white()
+{
   local message=$*
   echo -e "${message}" >&2
   return 0
@@ -102,18 +64,18 @@ log.yellow()
 
 login()
 {
-  echo "Configuring Bitwarden server..."
+  log.white "Configuring Bitwarden server..."
   bw config server ${BW_SERVER} &>/dev/null
 
-  echo "Logging into Bitwarden..."
+  log.white "Logging into Bitwarden..."
   SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD} &>/dev/null)
 
   if [ $? -eq 0 ]; then
-    echo "Bitwarden login successful!"
+    log.white "Bitwarden login successful!"
     export BW_SESSION=${SESSION}
   else
-    echo ""
-    echo "Bitwarden login failed. Exiting..."
+    log.red ""
+    log.red "Bitwarden login failed. Exiting..."
     exit 1
   fi
 }
@@ -126,7 +88,7 @@ logout()
 
   # Logout and ignore possible errors
   bw logout &>/dev/null
-  echo "Logged out of Bitwarden."
+  log.white "Logged out of Bitwarden."
 }
 
 login_check()
@@ -134,9 +96,9 @@ login_check()
   bw login --check &>/dev/null
 
   if [ $? -eq 0 ]; then
-    echo "Logged in to Bitwarden"
+    log.white "Logged in to Bitwarden"
   else
-    echo "Bitwarden login expired. Logging in again..."
+    log.yellow "Bitwarden login expired. Logging in again..."
     login
   fi
 }
@@ -147,10 +109,10 @@ set_org_id()
   ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id' 2>/dev/null)
 
   if [ $? -eq 0 ]; then
-    echo "Retrieved organization id for ${BW_ORGANIZATION}"
+    log.white "Retrieved organization id for ${BW_ORGANIZATION}"
     export BW_ORG_ID=${ORG}
   else
-    echo "Could not retrieve Bitwarden organization ${BW_ORGANIZATION}. Exiting..."
+    log.red "Could not retrieve Bitwarden organization ${BW_ORGANIZATION}. Exiting..."
     exit 1
   fi
 }
@@ -175,7 +137,7 @@ generate_secrets()
     write_uris "${name}" "${row_contents}"
     write_custom_fields "${name}" "${row_contents}"
 
-    echo "ROW: ${row_contents}"
+    log.white "ROW: ${row_contents}"
   done
 }
 
@@ -202,12 +164,12 @@ write_field()
   field_name=${3}
   suffix=${4}
 
-  echo "Parsing row ${row_contents}"
+  log.white "Parsing row ${row_contents}"
   field="$(echo ${row_contents} | jq -r ${field_name})"
 
   if [ "${field}" != "null" ]; then
-    echo "Writing ${secret_name}_${suffix} with ${field}"
-    echo "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
+    log.white "Writing ${secret_name}_${suffix} with ${field}"
+    log.white "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
   fi
 }
 
@@ -221,7 +183,7 @@ write_uris()
     for uris in $(echo ${row_contents} | jq -c '.login.uris | .[] | @base64' ); do
       uri=$(echo ${uris} | jq -r '@base64d' |  jq -r '.uri')
       if [ "${uri}" != "null" ]; then
-        echo "Writing ${secret_name}_uri_${i} with ${uri}"
+        log.white "Writing ${secret_name}_uri_${i} with ${uri}"
         "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
         ((i=i+1))
       fi
@@ -241,60 +203,100 @@ write_custom_fields()
       field_value=$(echo ${field_contents} | jq -r '.value')
 
       if [ "${field_name}" != "null" ] && [ "${field_value}" != "null" ]; then
-        echo "Writing ${secret_name}_${field_name} with ${field_value}"
-        echo "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
+        log.white "Writing ${secret_name}_${field_name} with ${field_value}"
+        log.white "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
       fi
     done
   fi
 }
 
 #
+# Global variables
+#
+if [[ -z "${BW_SERVER}" ]]; then
+  log.red "EnvVar 'BW_SERVER' is undefined."
+  exit 1
+fi
+if [[ -z "${BW_USERNAME}" ]]; then
+  log.red "EnvVar 'BW_USERNAME' is undefined."
+  exit 1
+fi
+if [[ -z "${BW_PASSWORD}" ]]; then
+  log.red "EnvVar 'BW_PASSWORD' is undefined."
+  exit 1
+fi
+if [[ -z "${BW_ORGANIZATION}" ]]; then
+  log.red "EnvVar 'BW_ORGANIZATION' is undefined."
+  exit 1
+fi
+
+REPEAT_ENABLED="${REPEAT_ENABLED:-false}"
+REPEAT_INTERVAL="${REPEAT_INTERVAL:-300}"
+if [ "$REPEAT_ENABLED" = true ] ; then
+  log.white "Repeat enabled with interval ${REPEAT_INTERVAL}."
+else
+  log.white "Repeat disabled."
+fi
+
+SECRETS_FILE="${SECRETS_FILE:-/output/secrets.yaml}"
+log.white "Secrets will be saved to ${SECRETS_FILE}."
+SECRETS_DIR="${SECRETS_FILE%/*}"
+log.white "Ensuring directory $SECRETS_DIR exists."
+mkdir -v -p $SECRETS_DIR
+
+TEMP_SECRETS_FILE="/tmp/secrets.yaml"
+TEMP_SECRETS_DIR="${TEMP_SECRETS_FILE%/*}"
+log.white "Ensuring directory $TEMP_SECRETS_DIR exists."
+mkdir -v -p $TEMP_SECRETS_DIR
+
+#
 # Start of main loop
 #
-echo "Start retrieving your Home Assistant secrets from Bitwarden"
+log.white "Start retrieving your Home Assistant secrets from Bitwarden"
 login
 set_org_id
 
 while true; do
-    num_of_items=$(bw list items --organizationid ${BW_ORG_ID} | jq length)
+  num_of_items=$(bw list items --organizationid ${BW_ORG_ID} | jq length)
 
-    if [ ${num_of_items} -gt 0 ]; then
-        echo "Generating ${SECRETS_FILE} file from login entries..."
-        generate_secrets
-        echo "Home Assistant secrets generated."
+  if [ ${num_of_items} -gt 0 ]; then
+    log.white "Generating ${SECRETS_FILE} file from login entries..."
+    generate_secrets
+    log.white "Home Assistant secrets generated."
 
-        echo "Comparing newly generated secrets to ${SECRETS_FILE}..."
-        if cmp -s -- "${TEMP_SECRETS_FILE}" "${SECRETS_FILE}"; then
-            rm -f ${TEMP_SECRETS_FILE}
-            echo "No secrets changes detected."
-        else
-            echo "Changes from Bitwarden detected, replacing ${SECRETS_FILE}..."
-            mv -f ${TEMP_SECRETS_FILE} ${SECRETS_FILE}
-            chmod go-wrx ${SECRETS_FILE}
-        fi
-
-        echo "Generating secret files from notes..."
-        generate_secret_files
-        echo "Secret files created."
+    log.white "Comparing newly generated secrets to ${SECRETS_FILE}..."
+    if cmp -s -- "${TEMP_SECRETS_FILE}" "${SECRETS_FILE}"; then
+      rm -f ${TEMP_SECRETS_FILE}
+      log.white "No secrets changes detected."
     else
-        echo "No secrets found in your organisation!"
-        echo "--------------------------------------"
-        echo "Ensure that you have:"
-        echo "  - At least 1 secret in your organisation ${BW_ORGANIZATION}"
-        echo "  - Bitwarden is started when using the Bitwarden add-on"
-        echo "--------------------------------------"
+      log.white "Changes from Bitwarden detected, replacing ${SECRETS_FILE}..."
+      mv -f ${TEMP_SECRETS_FILE} ${SECRETS_FILE}
+      chmod go-wrx ${SECRETS_FILE}
     fi
 
-    if [ "${REPEAT_ENABLED}" != "true" ]; then
-        break
-    fi
+    log.white "Generating secret files from notes..."
+    generate_secret_files
+    log.white "Secret files created."
+  else
+    log.red "No secrets found in your organisation!"
+    log.red "--------------------------------------"
+    log.red "Ensure that you have:"
+    log.red "  - At least 1 secret in your organisation ${BW_ORGANIZATION}"
+    log.red "  - Bitwarden is started when using the Bitwarden add-on"
+    log.red "--------------------------------------"
+  fi
 
-    sleep "${REPEAT_INTERVAL}"
-    login_check
+  if [ "${REPEAT_ENABLED}" != "true" ]; then
+    break
+  fi
 
-    echo "Syncing Bitwarden vault..."
-    bw sync &>/dev/null
-    echo "Bitwarden vault synced at: $(bw sync --last)"
+  log.info "Wait ${REPEAT_INTERVAL} seconds ..."
+  sleep "${REPEAT_INTERVAL}"
+  login_check
+
+  log.white "Syncing Bitwarden vault..."
+  bw sync &>/dev/null
+  log.white "Bitwarden vault synced at: $(bw sync --last)"
 done
 
 logout
