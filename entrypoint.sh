@@ -69,164 +69,173 @@ mkdir -v -p $TEMP_SECRETS_DIR
 # Script functions
 #
 
-log.red() {
-    local message=$*
-    echo -e "${__COLORS_RED}${message}${__COLORS_RESET}" >&2
-    return "${__EXIT_OK}"
+log.red()
+{
+  local message=$*
+  echo -e "${__COLORS_RED}${message}${__COLORS_RESET}" >&2
+  return "${__EXIT_OK}"
 }
 
-log.green() {
-    local message=$*
-    echo -e "${__COLORS_GREEN}${message}${__COLORS_RESET}" >&2
-    return "${__EXIT_OK}"
+log.green()
+{
+  local message=$*
+  echo -e "${__COLORS_GREEN}${message}${__COLORS_RESET}" >&2
+  return "${__EXIT_OK}"
 }
 
-log.yellow() {
-    local message=$*
-    echo -e "${__COLORS_YELLOW}${message}${__COLORS_RESET}" >&2
-    return "${__EXIT_OK}"
+log.yellow()
+{
+  local message=$*
+  echo -e "${__COLORS_YELLOW}${message}${__COLORS_RESET}" >&2
+  return "${__EXIT_OK}"
 }
 
-function login {
-    echo "Configuring Bitwarden server..."
-    bw config server ${BW_SERVER} &>/dev/null
+login()
+{
+  echo "Configuring Bitwarden server..."
+  bw config server ${BW_SERVER} &>/dev/null
 
-    echo "Logging into Bitwarden..."
-    SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD} &>/dev/null)
+  echo "Logging into Bitwarden..."
+  SESSION=$(bw login --raw ${BW_USERNAME} ${BW_PASSWORD} &>/dev/null)
 
-    if [ $? -eq 0 ]; then
-        echo "Bitwarden login successful!"
-        export BW_SESSION=${SESSION}
-    else
-        echo ""
-        echo "Bitwarden login failed. Exiting..."
-        exit 1
-    fi
+  if [ $? -eq 0 ]; then
+    echo "Bitwarden login successful!"
+    export BW_SESSION=${SESSION}
+  else
+    echo ""
+    echo "Bitwarden login failed. Exiting..."
+    exit 1
+  fi
 }
 
-function logout {
-    # Unset the previously set environment variables
-    unset BW_SESSION
-    unset BW_ORG_ID
+logout()
+{
+  # Unset the previously set environment variables
+  unset BW_SESSION
+  unset BW_ORG_ID
 
-    # Logout and ignore possible errors
-    bw logout &>/dev/null
-    echo "Logged out of Bitwarden."
+  # Logout and ignore possible errors
+  bw logout &>/dev/null
+  echo "Logged out of Bitwarden."
 }
 
-function login_check {
-    bw login --check &>/dev/null
+login_check()
+{
+  bw login --check &>/dev/null
 
-    if [ $? -eq 0 ]; then
-        echo "Logged in to Bitwarden"
-    else
-        echo "Bitwarden login expired. Logging in again..."
-        login
-    fi
+  if [ $? -eq 0 ]; then
+    echo "Logged in to Bitwarden"
+  else
+    echo "Bitwarden login expired. Logging in again..."
+    login
+  fi
 }
 
-function set_org_id {
-    echo "Retrieving organization id..."
-    ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id' 2>/dev/null)
+set_org_id()
+{
+  echo "Retrieving organization id..."
+  ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id' 2>/dev/null)
 
-    if [ $? -eq 0 ]; then
-        echo "Retrieved organization id for ${BW_ORGANIZATION}"
-        export BW_ORG_ID=${ORG}
-    else
-        echo "Could not retrieve Bitwarden organization ${BW_ORGANIZATION}. Exiting..."
-        exit 1
-    fi
+  if [ $? -eq 0 ]; then
+    echo "Retrieved organization id for ${BW_ORGANIZATION}"
+    export BW_ORG_ID=${ORG}
+  else
+    echo "Could not retrieve Bitwarden organization ${BW_ORGANIZATION}. Exiting..."
+    exit 1
+  fi
 }
 
-function generate_secrets {
-    touch ${TEMP_SECRETS_FILE}
+generate_secrets()
+{
+  touch ${TEMP_SECRETS_FILE}
 
-    printf "# Home Assistant secrets file\n" >> ${TEMP_SECRETS_FILE}
-    printf "# DO NOT MODIFY -- Managed by Bitwarden Secrets for Home Assistant add-on\n" >> ${TEMP_SECRETS_FILE}
+  printf "# Home Assistant secrets file\n" >> ${TEMP_SECRETS_FILE}
+  printf "# DO NOT MODIFY -- Managed by Bitwarden Secrets for Home Assistant add-on\n" >> ${TEMP_SECRETS_FILE}
 
-    for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 1) | (.|@base64)'); do
-        printf "\n" >> ${TEMP_SECRETS_FILE}
+  for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 1) | (.|@base64)'); do
+    printf "\n" >> ${TEMP_SECRETS_FILE}
 
-        row_contents=$(echo ${row} | jq -r '@base64d')
-        name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
+    row_contents=$(echo ${row} | jq -r '@base64d')
+    name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
 
-        write_field "${name}" "${row_contents}" ".login.username" "username"
-        write_field "${name}" "${row_contents}" ".login.password" "password"
-        write_field "${name}" "${row_contents}" ".notes" "notes"
+    write_field "${name}" "${row_contents}" ".login.username" "username"
+    write_field "${name}" "${row_contents}" ".login.password" "password"
+    write_field "${name}" "${row_contents}" ".notes" "notes"
 
-        write_uris "${name}" "${row_contents}"
-        write_custom_fields "${name}" "${row_contents}"
+    write_uris "${name}" "${row_contents}"
+    write_custom_fields "${name}" "${row_contents}"
 
-        echo "ROW: ${row_contents}"
+    echo "ROW: ${row_contents}"
+  done
+}
+
+generate_secret_files()
+{
+  for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 2) | [.name, (.notes|@base64)]')
+  do
+    file=$(echo $row | jq -r '.[0]')
+    dirname=$(dirname $file)
+    basename=$(basename $file)
+
+    mkdir -p ${SECRETS_DIR}/${dirname}
+    rm -f ${SECRETS_DIR}/${dirname}/${basename}
+
+    echo ${row} | jq -r '.[1] | @base64d' > "${SECRETS_DIR}/${dirname}/${basename}"
+    chmod go-wrx "${SECRETS_DIR}/${dirname}/${basename}"
+  done
+}
+
+write_field()
+{
+  secret_name=${1}
+  row_contents=${2}
+  field_name=${3}
+  suffix=${4}
+
+  echo "Parsing row ${row_contents}"
+  field="$(echo ${row_contents} | jq -r ${field_name})"
+
+  if [ "${field}" != "null" ]; then
+    echo "Writing ${secret_name}_${suffix} with ${field}"
+    echo "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
+  fi
+}
+
+write_uris()
+{
+  secret_name=${1}
+  row_contents=${2}
+
+  if [ "$(echo ${row_contents} | jq -r '.login.uris | length')" -gt "0" ]; then
+    i=1
+    for uris in $(echo ${row_contents} | jq -c '.login.uris | .[] | @base64' ); do
+      uri=$(echo ${uris} | jq -r '@base64d' |  jq -r '.uri')
+      if [ "${uri}" != "null" ]; then
+        echo "Writing ${secret_name}_uri_${i} with ${uri}"
+        "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
+        ((i=i+1))
+      fi
     done
+  fi
 }
 
-function generate_secret_files {
-    for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 2) | [.name, (.notes|@base64)]')
-    do
-        file=$(echo $row | jq -r '.[0]')
-        dirname=$(dirname $file)
-        basename=$(basename $file)
+write_custom_fields()
+{
+  secret_name=${1}
+  row_contents=${2}
 
-        mkdir -p ${SECRETS_DIR}/${dirname}
-        rm -f ${SECRETS_DIR}/${dirname}/${basename}
+  if [ "$(echo ${row_contents} | jq -r '.fields | length')" -gt "0" ]; then
+    for fields in $(echo ${row_contents} | jq -c '.fields | .[] | @base64'); do
+      field_contents=$(echo ${fields} | jq -r '@base64d')
+      field_name=$(echo ${field_contents} | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
+      field_value=$(echo ${field_contents} | jq -r '.value')
 
-        echo ${row} | jq -r '.[1] | @base64d' > "${SECRETS_DIR}/${dirname}/${basename}"
-        chmod go-wrx "${SECRETS_DIR}/${dirname}/${basename}"
+      if [ "${field_name}" != "null" ] && [ "${field_value}" != "null" ]; then
+        echo "Writing ${secret_name}_${field_name} with ${field_value}"
+        echo "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
+      fi
     done
-}
-
-function write_field {
-    secret_name=${1}
-    row_contents=${2}
-    field_name=${3}
-    suffix=${4}
-
-    echo "Parsing row ${row_contents}"
-    field="$(echo ${row_contents} | jq -r ${field_name})"
-
-    if [ "${field}" != "null" ]; then
-        echo "Writing ${secret_name}_${suffix} with ${field}"
-        echo "${secret_name}_${suffix}: '${field}'" >> ${TEMP_SECRETS_FILE}
-    fi
-}
-
-function write_uris {
-    secret_name=${1}
-    row_contents=${2}
-
-    if [ "$(echo ${row_contents} | jq -r '.login.uris | length')" -gt "0" ]; then
-        i=1
-
-        for uris in $(echo ${row_contents} | jq -c '.login.uris | .[] | @base64' ); do
-            uri=$(echo ${uris} | jq -r '@base64d' |  jq -r '.uri')
-
-            if [ "${uri}" != "null" ]; then
-                echo "Writing ${secret_name}_uri_${i} with ${uri}"
-                "${secret_name}_uri_${i}: '${uri}'" >> ${TEMP_SECRETS_FILE}
-
-                ((i=i+1))
-            fi
-        done
-    fi
-}
-
-function write_custom_fields {
-    secret_name=${1}
-    row_contents=${2}
-
-    if [ "$(echo ${row_contents} | jq -r '.fields | length')" -gt "0" ]; then
-        for fields in $(echo ${row_contents} | jq -c '.fields | .[] | @base64'); do
-            field_contents=$(echo ${fields} | jq -r '@base64d')
-            field_name=$(echo ${field_contents} | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
-            field_value=$(echo ${field_contents} | jq -r '.value')
-
-            if [ "${field_name}" != "null" ] && [ "${field_value}" != "null" ]; then
-                echo "Writing ${secret_name}_${field_name} with ${field_value}"
-                echo "${secret_name}_${field_name}: '${field_value}'" >> ${TEMP_SECRETS_FILE}
-            fi
-        done
-    fi
+  fi
 }
 
 #
