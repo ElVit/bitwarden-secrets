@@ -290,7 +290,7 @@ while true; do
     break
   fi
 
-  log.info "Wait ${REPEAT_INTERVAL} seconds ..."
+  log.white "Wait ${REPEAT_INTERVAL} seconds ..."
   sleep "${REPEAT_INTERVAL}"
   login_check
 
