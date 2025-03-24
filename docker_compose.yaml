@@ -1,0 +1,17 @@
+version: "3.3"
+services:
+  bw_api:
+    container_name: bitwarden-secrests
+    image: elvit/bitwarden-secrests:${TAG:-latest}
+    env_file:
+      - .env
+    environment:
+      BW_SERVER: http://a0d7b954-bitwarden:7277/
+      BW_USERNAME: homeassistant@localhost.lan
+      BW_PASSWORD: homeassistant
+      BW_ORGANIZATION: Home Assistant
+      SECRETS_FILE: /output/secrets.yaml
+      REPEAT_ENABLED: true
+      REPEAT_INTERVAL: 300
+    volumes:
+      - /mnt/user/appdata/home-assistant:/output
