@@ -2,7 +2,7 @@ version: "3.3"
 services:
   bw_api:
     container_name: bitwarden-secrests
-    image: elvit/bitwarden-secrests:${TAG:-latest}
+    image: ghcr.io/elvit/bitwarden-secrets:${TAG:-latest}
     env_file:
       - .env
     environment:
