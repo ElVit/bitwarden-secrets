@@ -103,7 +103,7 @@ set_org_id()
   ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id') 2>/dev/null
 
   if [ $? -eq 0 ]; then
-    log.white "Retrieved organization id for ${BW_ORGANIZATION}"
+    log.white "Retrieved organization id for '${BW_ORGANIZATION}'"
     export BW_ORG_ID=${ORG}
   else
     log.red "Could not retrieve bitwarden organization ${BW_ORGANIZATION}. Exiting ..."
