@@ -120,7 +120,8 @@ generate_secrets()
   for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 1) | (.|@base64)'); do
     if [[ -z "${row}" ]]; then
       continue
-    fi  
+    fi
+    printf "\n" >> ${TEMP_SECRETS_FILE}
     row_contents=$(echo ${row} | jq -r '@base64d')
     name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
 
@@ -129,7 +130,6 @@ generate_secrets()
     write_field "${name}" "${row_contents}" ".notes" "notes"
     write_uris "${name}" "${row_contents}"
     write_custom_fields "${name}" "${row_contents}"
-    printf "\n" >> ${TEMP_SECRETS_FILE}
     #log.blue "ROW: ${row_contents}"
   done
 }
