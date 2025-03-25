@@ -2,9 +2,9 @@ version: "3.3"
 services:
   bitwarden-secrets:
     container_name: bitwarden-secrets
-    image: ghcr.io/elvit/bitwarden-secrets:${TAG:-latest}
-    env_file:
-      - .env
+    image: ghcr.io/elvit/bitwarden-secrets:latest
+    #env_file:
+    #  - .env
     environment:
       BW_SERVER: http://192.168.100.100:7277/
       BW_USERNAME: homeassistant@localhost.lan
@@ -12,6 +12,6 @@ services:
       BW_ORGANIZATION: Home Assistant
       SECRETS_FILE: /output/secrets.yaml
       REPEAT_ENABLED: true
-      REPEAT_INTERVAL: 300
+      REPEAT_INTERVAL: 600
     volumes:
       - /mnt/user/appdata/home-assistant:/output
