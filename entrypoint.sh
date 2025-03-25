@@ -220,7 +220,7 @@ if [[ -z "${BW_ORGANIZATION}" ]]; then
 fi
 
 REPEAT_ENABLED="${REPEAT_ENABLED:-true}"
-REPEAT_INTERVAL="${REPEAT_INTERVAL:-300}"
+REPEAT_INTERVAL="${REPEAT_INTERVAL:-600}"
 if [ "$REPEAT_ENABLED" = true ] ; then
   log.white "Repeat enabled with interval ${REPEAT_INTERVAL}."
 else
