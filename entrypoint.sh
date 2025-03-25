@@ -56,7 +56,7 @@ log.blue()
   return 0
 }
 
-login()
+bw.login()
 {
   log.white "Configuring bitwarden server ..."
   bw config server ${BW_SERVER} &>/dev/null
@@ -74,7 +74,7 @@ login()
   fi
 }
 
-logout()
+bw.logout()
 {
   # Unset the previously set environment variables
   unset BW_SESSION
@@ -85,7 +85,7 @@ logout()
   log.white "Logged out of bitwarden."
 }
 
-login_check()
+bw.login_check()
 {
   bw login --check &>/dev/null
 
@@ -93,11 +93,11 @@ login_check()
     log.white "Logged in to bitwarden."
   else
     log.yellow "Bitwarden login expired. Logging in again ..."
-    login
+    bw.login
   fi
 }
 
-set_org_id()
+bw.set_org_id()
 {
   log.white "Retrieving organization id ..."
   ORG=$(bw get organization "${BW_ORGANIZATION}" | jq -r '.id') 2>/dev/null
@@ -111,7 +111,7 @@ set_org_id()
   fi
 }
 
-generate_secrets()
+bw.generate_secrets()
 {
   touch ${TEMP_SECRETS_FILE}
   echo "# bitwarden secrets file" >> ${TEMP_SECRETS_FILE}
@@ -125,16 +125,16 @@ generate_secrets()
     row_contents=$(echo ${row} | jq -r '@base64d')
     name=$(echo $row_contents | jq -r '.name' | tr '?:&,%@-' ' ' | tr '[]{}#*!|> ' '_' | tr -s '_' | tr '[:upper:]' '[:lower:]')
 
-    write_field "${name}" "${row_contents}" ".login.username" "username"
-    write_field "${name}" "${row_contents}" ".login.password" "password"
-    write_field "${name}" "${row_contents}" ".notes" "notes"
-    write_uris "${name}" "${row_contents}"
-    write_custom_fields "${name}" "${row_contents}"
+    bw.write_field "${name}" "${row_contents}" ".login.username" "username"
+    bw.write_field "${name}" "${row_contents}" ".login.password" "password"
+    bw.write_field "${name}" "${row_contents}" ".notes" "notes"
+    bw.write_uris "${name}" "${row_contents}"
+    bw.write_custom_fields "${name}" "${row_contents}"
     #log.blue "ROW: ${row_contents}"
   done
 }
 
-generate_secret_files()
+bw.generate_secret_files()
 {
   for row in $(bw list items --organizationid ${BW_ORG_ID} | jq -c '.[] | select(.type == 2) | [.name, (.notes|@base64)]'); do
     file=$(echo $row | jq -r '.[0]')
@@ -148,7 +148,7 @@ generate_secret_files()
   done
 }
 
-write_field()
+bw.write_field()
 {
   secret_name=${1}
   row_contents=${2}
@@ -163,7 +163,7 @@ write_field()
   fi
 }
 
-write_uris()
+bw.write_uris()
 {
   secret_name=${1}
   row_contents=${2}
@@ -181,7 +181,7 @@ write_uris()
   fi
 }
 
-write_custom_fields()
+bw.write_custom_fields()
 {
   secret_name=${1}
   row_contents=${2}
@@ -242,15 +242,15 @@ mkdir -v -p $TEMP_SECRETS_DIR
 # Start of main loop
 #
 log.white "Start retrieving your secrets from bitwarden ..."
-login
-set_org_id
+bw.login
+bw.set_org_id
 
 while true; do
   num_of_items=$(bw list items --organizationid ${BW_ORG_ID} | jq length)
 
   if [ ${num_of_items} -gt 0 ]; then
     log.white "Generating ${SECRETS_FILE} file from login entries ..."
-    generate_secrets
+    bw.generate_secrets
     log.white "Secrets file generated."
 
     log.white "Comparing newly generated secrets to ${SECRETS_FILE} ..."
@@ -264,7 +264,7 @@ while true; do
     fi
 
     log.white "Generating secret files from notes ..."
-    generate_secret_files
+    bw.generate_secret_files
     log.white "Secrets files created."
   else
     log.red "No secrets found in your organisation!"
@@ -281,12 +281,12 @@ while true; do
 
   log.white "Wait ${REPEAT_INTERVAL} seconds ..."
   sleep "${REPEAT_INTERVAL}"
-  login_check
+  bw.login_check
 
   log.white "Syncing bitwarden vault..."
   bw sync &>/dev/null
   log.white "Bitwarden vault synced at: $(bw sync --last)"
 done
 
-logout
+bw.logout
 exit 0
