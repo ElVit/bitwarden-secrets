@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ARG BW_CLI_VERSION=1.22.1
+ARG BW_CLI_VERSION=2025.2.0
 
 # Install dependencies
 RUN apk add --no-cache jq npm bash
