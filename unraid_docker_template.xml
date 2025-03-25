@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>bitwarden-secrets</Name>
+  <Repository>ghcr.io/elvit/bitwarden-secrets:latest</Repository>
+  <Registry>https://github.com/ElVit/bitwarden-secrets/pkgs/container/bitwarden-secrets</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project>https://github.com/ElVit/bitwarden-secrets</Project>
+  <Overview>Docker container to create bitwarden secrets yaml file</Overview>
+  <Category>Security:</Category>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/bitwarden/clients/main/apps/web/src/images/icons/android-chrome-192x192.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1742896715</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="BW_SERVER" Target="BW_SERVER" Default="http://192.168.100.100:7277/" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="BW_USERNAME" Target="BW_USERNAME" Default="homeassistant@localhost.lan" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="BW_PASSWORD" Target="BW_PASSWORD" Default="homeassistant" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="BW_ORGANIZATION" Target="BW_ORGANIZATION" Default="Home Assistant" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="SECRETS_FILE" Target="SECRETS_FILE" Default="/output/secrets.yaml" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="REPEAT_ENABLED" Target="REPEAT_ENABLED" Default="true" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="REPEAT_INTERVAL" Target="REPEAT_INTERVAL" Default="600" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Output Directory" Target="/output" Default="/mnt/user/appdata/bitwarden-secrets" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false"/>
+  <TailscaleStateDir/>
+</Container>
