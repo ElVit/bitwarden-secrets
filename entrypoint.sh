@@ -219,7 +219,7 @@ if [[ -z "${BW_ORGANIZATION}" ]]; then
   exit 1
 fi
 
-REPEAT_ENABLED="${REPEAT_ENABLED:-false}"
+REPEAT_ENABLED="${REPEAT_ENABLED:-true}"
 REPEAT_INTERVAL="${REPEAT_INTERVAL:-300}"
 if [ "$REPEAT_ENABLED" = true ] ; then
   log.white "Repeat enabled with interval ${REPEAT_INTERVAL}."
@@ -228,7 +228,7 @@ else
 fi
 
 SECRETS_FILE="${SECRETS_FILE:-/output/secrets.yaml}"
-log.white "Secrets will be saved to ${SECRETS_FILE}."
+log.yellow "Secrets will be saved to ${SECRETS_FILE}."
 SECRETS_DIR=$(dirname "$SECRETS_FILE")
 log.white "Ensuring directory $SECRETS_DIR exists."
 mkdir -v -p $SECRETS_DIR
@@ -258,7 +258,7 @@ while true; do
       rm -f ${TEMP_SECRETS_FILE}
       log.white "No secrets changes detected."
     else
-      log.white "Changes from bitwarden detected, replacing ${SECRETS_FILE} ..."
+      log.yellow "Changes from bitwarden detected, replacing ${SECRETS_FILE} ..."
       mv -f ${TEMP_SECRETS_FILE} ${SECRETS_FILE}
       chmod go-wrx ${SECRETS_FILE}
     fi
