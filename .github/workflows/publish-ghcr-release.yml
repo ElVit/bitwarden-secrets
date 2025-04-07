@@ -2,7 +2,7 @@ name: Create and publish a Docker image release
 
 on:
   release:
-    types: [published]
+    types: [released]
 
 env:
   REGISTRY: ghcr.io
@@ -10,7 +10,6 @@ env:
 
 jobs:
   build-and-push-image:
-    if: "!github.event.release.prerelease"
     runs-on: ubuntu-latest
     permissions:
       contents: read
