@@ -27,7 +27,7 @@
   <Config Name="BW_ORGANIZATION" Target="BW_ORGANIZATION" Default="Home Assistant" Mode="" Description="" Type="Variable" Display="always" Required="true" Mask="false"/>
   <Config Name="SECRETS_FILE" Target="SECRETS_FILE" Default="/output/secrets.yaml" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="REPEAT_ENABLED" Target="REPEAT_ENABLED" Default="true" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false"/>
-  <Config Name="REPEAT_INTERVAL" Target="REPEAT_INTERVAL" Default="600" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="REPEAT_INTERVAL" Target="REPEAT_INTERVAL" Default="3600" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Output Directory" Target="/output" Default="/mnt/user/appdata/bitwarden-secrets" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false"/>
   <TailscaleStateDir/>
 </Container>
